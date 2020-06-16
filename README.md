@@ -10,13 +10,13 @@ Docker Image for AWS IOT connected Mosquitto broker.
 
 ## Step 1: Setup AWS Account
 
-Go to [AWS](https://docs.aws.amazon.com/iot/latest/developerguide/iot-console-signin.html) and setup the account.
+Navigate to [AWS](https://docs.aws.amazon.com/iot/latest/developerguide/iot-console-signin.html) and setup the account.
 
 Navigate to `User` -> `My Security Credentials`, and obtain **Access Key ID** and **Access Key**.
 
 ## Step 2: Clone the Repository
 
-Clone this repository to a location in your drive.
+Clone this [repository](https://github.com/ansonhe97/aws_mosquitto_broker) to a location in your drive.
 
 ## Step 3: Install and Setup AWS CLI
 
@@ -74,7 +74,6 @@ Download the root Amazon CA certificate also in the `certs` directory:
 sudo curl https://www.websecurity.digicert.com/content/dam/websitesecurity/digitalassets/desktop/pdfs/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem -o rootCA.pem
 ```
 
-
 ## Step 5: Edit mosquitto custom config file
 
 Rename `awsbridge.conf.sample` to `awsbridge.conf`:
@@ -110,28 +109,26 @@ docker run -ti -p 1883:1883 -p 9001:9001 --name mqtt aws_mqtt_broker
 Console / Log output:
 
 ```sh
-1493564060: mosquitto version 1.4.10 (build date 2016-10-26 14:35:35+0000) starting
-1493564060: Config loaded from /mosquitto/config/mosquitto.conf.
-1493564060: Opening ipv4 listen socket on port 1883.
-1493564060: Opening ipv6 listen socket on port 1883.
-1493564060: Bridge local.bridgeawsiot doing local SUBSCRIBE on topic localgateway_to_awsiot
-1493564060: Bridge local.bridgeawsiot doing local SUBSCRIBE on topic both_directions
-1493564060: Connecting bridge awsiot (a3uewmymwlcmar.iot.us-east-1.amazonaws.com:8883)
-1493564060: Bridge bridgeawsiot sending CONNECT
-1493564060: Received CONNACK on connection local.bridgeawsiot.
-1493564060: Bridge local.bridgeawsiot sending SUBSCRIBE (Mid: 1, Topic: awsiot_to_localgateway, QoS: 1)
-1493564060: Bridge local.bridgeawsiot sending UNSUBSCRIBE (Mid: 2, Topic: localgateway_to_awsiot)
-1493564060: Bridge local.bridgeawsiot sending SUBSCRIBE (Mid: 3, Topic: both_directions, QoS: 1)
-1493564060: Received SUBACK from local.bridgeawsiot
-1493564061: Received UNSUBACK from local.bridgeawsiot
-1493564061: Received SUBACK from local.bridgeawsiot
+1592301141: mosquitto version 1.4.15 (build date 2018-03-04 15:19:39+0000) starting
+1592301141: Config loaded from /mosquitto/config/mosquitto.conf.
+1592301141: Opening ipv4 listen socket on port 1883.
+1592301141: Opening ipv6 listen socket on port 1883.
+1592301141: Bridge local.bridgeawsiot doing local SUBSCRIBE on topic localgateway_to_awsiot
+1592301141: Bridge local.bridgeawsiot doing local SUBSCRIBE on topic both_directions
+1592301141: Connecting bridge awsiot (aq53tian3vbby.iot.eu-central-1.amazonaws.com:8883)
+1592301141: Bridge bridgeawsiot sending CONNECT
+1592301144: Received CONNACK on connection local.bridgeawsiot.
+1592301144: Bridge local.bridgeawsiot sending SUBSCRIBE (Mid: 1, Topic: awsiot_to_localgateway, QoS: 1)
+1592301144: Bridge local.bridgeawsiot sending UNSUBSCRIBE (Mid: 2, Topic: localgateway_to_awsiot)
+1592301144: Bridge local.bridgeawsiot sending SUBSCRIBE (Mid: 3, Topic: both_directions, QoS: 1)
+1592301144: Received SUBACK from local.bridgeawsiot
+1592301144: Received UNSUBACK from local.bridgeawsiot
+1592301145: Received SUBACK from local.bridgeawsiot
 ```
 
+## Step 8: Testing the Local Broker
 
-## Step 8: Test
-
-
-### Publish from aws iot console
+### Publish from AWS IoT console
 
 1.- From AWS Management Console go to `AWS IoT Services` -> `Test`
 
@@ -145,11 +142,19 @@ Console / Log output:
 
 **Note:** Make sure that it is selected the `eu-central-1` as the region.
 
-### Publish from host
+### Publish from Host
 
-Flow: hostpc -> dockergateway -> aws
+Workflow: `Local Broker(Host PC)` -> `Docker Gateway` -> `AWS IoT`.
+
+Run the following in terminal to publish from host to AWS IoT:
 
 `mosquitto_pub -h localhost -p 1883 -q 1 -d -t localgateway_to_awsiot  -i clientid1 -m "{\"key\": \"helloFromLocalGateway\"}"`
+
+**Note:** Make sure that you have [mosquitto](https://mosquitto.org/download/) installed on your PC.
+
+### Publish from Wio Terminal
+
+[Wio Terminal Client](https://wiki.seeedstudio.com/AWS-IOT-Bridge/)
 
 ### Publish from arduino UNO / Mega with Ethernet Shield
 
