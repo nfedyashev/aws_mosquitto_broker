@@ -4,99 +4,112 @@ AWS Mosquitto Broker
 [![](https://images.microbadger.com/badges/image/mantgambl/aws_mosquitto_broker.svg)](https://microbadger.com/images/mantgambl/aws_mosquitto_broker "Get your own image badge on microbadger.com")
 [![](https://images.microbadger.com/badges/version/mantgambl/aws_mosquitto_broker.svg)](https://microbadger.com/images/mantgambl/aws_mosquitto_broker "Get your own version badge on microbadger.com")
 
-Docker Image for AWS IOT connected Mosquitto broker
+Docker Image for AWS IOT connected Mosquitto broker.
 
 ![enter image description here](https://s3.amazonaws.com/aws-iot-blog-assets/how-to-bridge-mosquitto-mqtt-broker-to-aws-iot/1-overview.png)
 
-
 ## Step 1: Setup AWS Account
 
-Go to [AWS](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html#cli-signup) and setup the account
+Go to [AWS](https://docs.aws.amazon.com/iot/latest/developerguide/iot-console-signin.html) and setup the account.
 
+Navigate to `User` -> `My Security Credentials`, and obtain **Access Key ID** and **Access Key**.
 
-Result: Acces Key + Access Secret
+## Step 2: Clone the Repository
 
-## Step 2: Install and Setup AWS CLI
+Clone this repository to a location in your drive.
 
-Install AWS CLI from [here](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+## Step 3: Install and Setup AWS CLI
 
-Then run AWS Configure and put your Region, your Access Key and Acces Secret
+Install AWS CLI from [here](http://docs.aws.amazon.com/cli/latest/userguide/installing.html).
 
-	aws configure
-	AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
-	AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-	Default region name [None]: us-west-2
-	Default output format [None]: json
+Run `aws configure` in terminal and type in your Region, your Access ID and Keys, as followed:
 
+```sh
+aws configure
+AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+Default region name [None]: eu-central-1
+Default output format [None]: json
+```
 
 ## Step 3: Create an IAM policy for the bridge
 
+Run the following command to create policy for the bridge:
+
+```sh
+aws iot create-policy --policy-name bridge --policy-document '{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Action": "iot:*","Resource": "*"}]}'
 ```
-aws iot create-policy --policy-name bridge --policy-document '{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Action": "iot:*","Resource": "*"}]}
-```
-
-
-
 
 ## Step 4: Create Certificates
 
-Place yourself in ./config/certs directory and create certificates and keys, note the certificate ARN
+Go into the `aws_mosquitto_broker/config/certs` directory and run the following to create certificates:
 
-	cd ./config/certs
+```sh
+cd aws_mosquitto_broker/config/certs
 
-	sudo aws iot create-keys-and-certificate --set-as-active \
-	--certificate-pem-outfile cert.crt --private-key-outfile private.key \
-	--public-key-outfile public.key –region eu-central-1 \
+sudo aws iot create-keys-and-certificate --set-as-active --certificate-pem-outfile cert.crt --private-key-outfile private.key --public-key-outfile public.key --region eu-central-1
+```
 
+Then you can run the `aws iot list-certificates` to check the created certificates. Copy the ARN in the form of `arn:aws:iot:eu-central-1:0123456789:cert/xyzxyz`:
 
+```sh
+aws iot list-certificates
+```
 
-List the certificate and copy the ARN in the form of arn:aws:iot:eu-central-1:0123456789:cert/xyzxyz
+Attach the policy to your certificate. Replace the `{REPLACE_ARN_CERT}` with your copied ARN `arn:aws:iot:eu-central-1:0123456789:cert/xyzxyz`:
 
-	aws iot list-certificates
+```sh
+aws iot attach-principal-policy --policy-name bridge --principal {REPLACE_ARN_CERT}
+```
 
+Add read permissions to **private key**, **public key** and **client cert** (inside `certs` folder):
 
-Attach the policy to your certificate
+```sh
+sudo chmod 644 private.key && sudo chmod 644 public.key && sudo chmod 644 cert.crt
+```
 
-	aws iot attach-principal-policy --policy-name bridge --principal REPLACE_ARN_CERT
+Download the root Amazon CA certificate also in the `certs` directory:
 
-
-Add read permissions to private key and client cert
-
-	sudo chmod 644 ./config/certs/private.key
-	sudo chmod 644 ./config/certs/cert.crt
-
-
-Download root CA certificate
-
-	sudo wget https://www.symantec.com/content/en/us/enterprise/verisign/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem -O rootCA.pem
+```sh
+sudo curl https://www.websecurity.digicert.com/content/dam/websitesecurity/digitalassets/desktop/pdfs/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem -o rootCA.pem
+```
 
 
 ## Step 5: Edit mosquitto custom config file
 
-Rename awsbridge.conf.sample to awsbridge.conf
+Rename `awsbridge.conf.sample` to `awsbridge.conf`:
 
-	mv ./config/conf.d/awsbridge.conf.sample ./config/conf.d/awsbridge.conf
+```sh
+mv awsbridge.conf.sample awsbridge.conf
+```
 
-Edit ./config/conf.d/awsbridge.conf and follow the awsbridge.conf instructions
+Edit `config/conf.d/awsbridge.conf` and follow the awsbridge.conf instructions:
 
-	nano ./config/conf.d/awsbridge.conf
+```sh
+nano config/conf.d/awsbridge.conf
+```
 
-
+**Note:** Run `aws iot describe-endpoint` to get the AWS IoT endpoint.
 
 ## Step 6:  Build Docker File
 
-	docker build -t aws_mqtt_broker .
+Go back to the root location `aws_mosquitto_broker` and run the following:
 
+```sh
+docker build -t aws_mqtt_broker .
+```
+
+**Note:** Make sure you have installed docker on your PC first.
 
 ## Step 7: Run Docker Image
 
-	docker run -ti -p 1883:1883 -p 9001:9001 --name mqtt aws_mqtt_broker
-
-
+```sh
+docker run -ti -p 1883:1883 -p 9001:9001 --name mqtt aws_mqtt_broker
+```
 
 Console / Log output:
 
-```
+```sh
 1493564060: mosquitto version 1.4.10 (build date 2016-10-26 14:35:35+0000) starting
 1493564060: Config loaded from /mosquitto/config/mosquitto.conf.
 1493564060: Opening ipv4 listen socket on port 1883.
@@ -120,20 +133,17 @@ Console / Log output:
 
 ### Publish from aws iot console
 
-1.- From AWS Management Console go to AWS IOT Services -> Test
+1.- From AWS Management Console go to `AWS IoT Services` -> `Test`
 
-2.- Subscribe to topics mentioned in our config file
-	- awsiot_to_localgateway
-	- localgateway_to_awsiot
-	- both_directions
+2.- Subscribe to topics mentioned in our config file `awsiot_to_localgateway`, `localgateway_to_awsiot` and `both_directions`.
 
-3.- Publish to awsiot_to_localgateway topic (hello world)
+3.- Publish to `awsiot_to_localgateway` topic (hello world).
 
 4.- Review log or console output in our local broker for something like this:
 
 `1493564128: Received PUBLISH from local.bridgeawsiot (d0, q0, r0, m0, 'awsiot_to_localgateway', ... (45 bytes)) `
 
-
+**Note:** Make sure that it is selected the `eu-central-1` as the region.
 
 ### Publish from host
 
