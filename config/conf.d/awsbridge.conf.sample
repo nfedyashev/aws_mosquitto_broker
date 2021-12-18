@@ -20,7 +20,7 @@ bridge_insecure false
 # Bridge connection name and MQTT client Id,
 # enabling the connection automatically when the broker starts.
 cleansession true
-clientid bridgeawsiot
+clientid bridgeawsiot # available as `clientid()` in AWS IoT SQL Rule engine
 start_type automatic
 notifications false
 log_type all
@@ -28,8 +28,7 @@ log_type all
 # =================================================================
 # Certificate based SSL/TLS support
 # -----------------------------------------------------------------
-#Path to the rootCA
-
+# Path to the rootCA
 bridge_cafile /mosquitto/config/certs/AmazonRootCA1.pem
 
 # Path to the PEM encoded client certificate
