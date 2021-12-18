@@ -30,7 +30,7 @@ log_type all
 # -----------------------------------------------------------------
 #Path to the rootCA
 
-bridge_cafile /mosquitto/config/certs/rootCA.pem
+bridge_cafile /mosquitto/config/certs/AmazonRootCA1.pem
 
 # Path to the PEM encoded client certificate
 bridge_certfile /mosquitto/config/certs/cert.crt
